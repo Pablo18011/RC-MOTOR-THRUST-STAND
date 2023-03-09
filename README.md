@@ -1,6 +1,6 @@
 # RC MOTOR THRUST STAND
  ![](/Images/RC_MOTOR_THRUST_STAND_4829x3529.png) 
-# RCMTS PROJECT
+# Project
 **Warning a fast-spinning propeller can do a lot damage, very quickly!!**
 
 **Treat this project and my code with caution!!**
@@ -29,4 +29,4 @@ to the other side of the load cell.I then clamp this into a heavy vice.
 
  ![](Images/RC_MOTOR_THRUST_STAND_PHOTO_2405x2250.png)
  
- # Description and Operation
+ # Operation
