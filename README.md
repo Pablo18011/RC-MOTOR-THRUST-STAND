@@ -30,4 +30,24 @@ to the other side of the load cell.I then clamp this into a heavy vice.
  ![](Images/RC_MOTOR_THRUST_STAND_PHOTO_2405x2250.png)
  
  # Operation
+ I started with a digital scale tutorial, which uses a 5KG load cell and HK711 amplifier.
+https://randomnerdtutorials.com/arduino-load-cell-hx711/
+
+The first thing to do is calibrate the load cell with a known weight and change the calibration
+Factor in the code. 
+I modified the code to display thrust in grams on an IIC/I2C/TWI 2004 20X4 LCD display.
+I used analogRead a 10k linear potentiometer to map the values to PWM.
+The output is determined by the potentiometer setting or the PWM pre-set, sent to a 
+standard PWM ESC, in turn controls an RC motor.
+
+Three push buttons are used for Tare, Safe Start and PWM pre-set.
+Tare, is used to zero the load cell in relation to any deviation.
+Safe Start, I added as a safety factor, so you have to push a button before the Arduino will
+Output a PWM signal to the ESC.
+PWM pre-set, used to output set PWM values for timed intervals 1250us, 1500us, 1750us and 2000us, for 2 secs each. 
+This gives a repeatable bench mark, when testing different motors.
+The buzzer and LED is used as a start-up warning.
+
+This version can be combined with a separate RC power meter and used to test different RC motor and propeller combination outputs.
+
 
