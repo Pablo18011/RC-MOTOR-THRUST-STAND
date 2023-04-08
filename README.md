@@ -1,4 +1,4 @@
-# RC MOTOR THRUST STAND
+# RC MOTOR THRUST STAND v 1.0
  ![](/Images/RCMTTSPWM_4829x3529.png) 
 # Project
 **Warning a fast-spinning propeller can do a lot damage, very quickly!!**
