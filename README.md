@@ -45,8 +45,8 @@ Tare, is used to zero the load cell in relation to any deviation.
 Safe Start, I added as a safety factor, so you have to push a button before the Arduino will
 Output a PWM signal to the ESC.
 PWM pre-set, used to output set PWM values for timed intervals 1250us, 1500us, 1750us and 2000us, for 2 secs each. 
-This gives a repeatable bench mark, when testing different motors.
-The buzzer and LED is used as a start-up warning.
+This gives a repeatable bench mark, when comparison testing different motors.
+The buzzer and LED are used as a start-up warning.
 
 This version can be combined with a separate RC power meter and used to test different RC motor and propeller combination outputs.
 
