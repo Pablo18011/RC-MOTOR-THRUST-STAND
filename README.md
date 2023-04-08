@@ -19,8 +19,8 @@ I built a breadboard version of the digital scale and calibrated the load cell.
 I then built a simple PWM motor control circuit, when I understood how they both worked, I incorporated what I had 
 Learnt and developed my own code.
 # Components
-Arduino Nano, 5KG Load Cell + HX711 Amplifier, I2C 2004 20X4 LCD Module Display, 10K Linear Potentiometer, 3 x Push Button Switches
-Turnigy Plush 30amp (Any standard PWM ESC), LED, buzzer, 330Ω resistor, Pin headers and Dupont Jumper Wires,
+Arduino Nano, 5KG Load Cell + HX711 Amplifier, I2C 2004 20X4 LCD Module Display, 10K Linear Potentiometer, 3 x Push Button Switches,
+3 x 10 kΩ ±5% Resistors (pulldown), Turnigy Plush 30amp (Any standard PWM ESC), LED, buzzer, 330Ω resistor, Pin headers and Dupont Jumper Wires,
 Aluminium bar, nuts and bolts, motor mount, motor.
 
 My load cell is mounted on a strip of aluminium bar drilled to match the load cell and a spare Quadcopter arm drilled and fitted
