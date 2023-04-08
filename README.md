@@ -51,3 +51,8 @@ The buzzer and LED are used as a start-up warning.
 This version can be combined with a separate RC power meter and used to test different RC motor and propeller combination outputs.
 
 # Improvements?
+Include voltage and current in the display? I have now built a RCMTS v2.0,
+This uses a resistor voltage divider circuit, ACS758LCB-050B-PFF-T 50A Hall Current Sensor and a
+precision LM4040 Voltage Reference Breakout - 2.048V and 4.096V.
+With additional code, this allows the display of voltage and current in the range of 30V DC & 50 Amp.
+
