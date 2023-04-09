@@ -56,6 +56,7 @@ DShot instead of PWM?
 
 Coming soon... 
 RCMTS v2.0 !
+https://www.youtube.com/watch?v=jEHoqFxafgg
 
 This uses a resistor voltage divider circuit, ACS758LCB-050B-PFF-T 50A Hall Current Sensor and a
 precision LM4040 4.096V Voltage Reference Breakout.
