@@ -50,7 +50,7 @@ The buzzer and LED are used as a start-up warning.
 This version can be combined with a separate RC power meter and used to test different RC motor and propeller combination outputs.
 
 # The Code
-I used [Arduino IDE V 2.0.4](https://www.arduino.cc/en/software) to create and compile the code.
+I used [Arduino IDE v 2.0.4](https://www.arduino.cc/en/software) to create and compile the code.
 Please bear in mind I have taught myself to code and I’m still learning.
 I also do this for my enjoyment and to put something back into the community 😊.
 Credit to [Random Nerd Tutorials](https://randomnerdtutorials.com/arduino-load-cell-hx711/), I started with this to learn how a digital scale works.
