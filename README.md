@@ -7,7 +7,7 @@
 
 **Any time there is power applied to the ESC and motor assume the propeller will start up at any time and without any warning!!**
 
-I build and fly RC freestyle quadcopters and RC planes. I needed a way to test RC motor power characteristics, to help me choose the correct motor for a particular build. Commercial versions are available; however, these can be expensive. 
+[I build and fly RC freestyle quadcopters and RC planes](https://www.youtube.com/@pablofpv/featured). I needed a way to test RC motor power characteristics, to help me choose the correct motor for a particular build. Commercial versions are available; however, these can be expensive. 
 I set out to build a simple RCMTS, using kitchen scales and an angle bracket, but then I thought, maybe I could do better and learn something along the way?
 
 My version is based on an Arduino Nano and uses a load cell HX711
