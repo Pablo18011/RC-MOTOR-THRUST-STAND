@@ -1,0 +1,10 @@
+PWM 1100-2000us
+
+6S
+
+0-30V 
+0-50A
+5KG load cell
+
+4 x PWM Steps 1250-1500-1750-2000us
+Ramp mode?
