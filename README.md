@@ -30,8 +30,7 @@ to the other side of the load cell.I then clamp this into a heavy vice.
  ![](Images/RC_MOTOR_THRUST_STAND_PHOTO_2405x2250.png)
  
  # Operation
- I started with a digital scale tutorial, which uses a 5KG load cell and HK711 amplifier.
-https://randomnerdtutorials.com/arduino-load-cell-hx711/
+ I started with a [digital scale tutorial](https://randomnerdtutorials.com/arduino-load-cell-hx711/), which uses a 5KG load cell and HK711 amplifier.
 
 The first thing to do is calibrate the load cell with a known weight and change the calibration
 Factor in the code. 
@@ -51,15 +50,25 @@ The buzzer and LED are used as a start-up warning.
 This version can be combined with a separate RC power meter and used to test different RC motor and propeller combination outputs.
 
 # The Code
+I used [Arduino IDE V 2.0.4](https://www.arduino.cc/en/software) to create and compile the code.
+Please bear in mind I have taught myself to code and I’m still learning.
+I also do this for my enjoyment and to put something back into the community 😊.
+Credit to [Random Nerd Tutorials](https://randomnerdtutorials.com/arduino-load-cell-hx711/), I started with this to learn how a digital scale works.
+I used the code to calibrate my load cell and combined with PWM control
+to create my own code.
+
+
 
 
 # Improvements?
 Include voltage and current in the display?
 DShot instead of PWM?
+Ramp mode?
+Optimize/simplify the code?
 
 Coming soon... 
-RCMTS v2.0 !
-https://www.youtube.com/watch?v=jEHoqFxafgg
+[RCMTS v2.0 !](https://www.youtube.com/watch?v=jEHoqFxafgg)
+
 
 This uses a resistor voltage divider circuit, ACS758LCB-050B-PFF-T 50A Hall Current Sensor and a
 precision LM4040 4.096V Voltage Reference Breakout.
