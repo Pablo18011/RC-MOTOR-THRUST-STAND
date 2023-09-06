@@ -1,0 +1,396 @@
+/*
+   RC motor thrust stand V5
+   **Warning a fast-spinning propeller can do a lot damage, very quickly!!**
+   **Treat this project and my code with caution!!**
+   **Any time there is power applied to the ESC and motor assume the propeller will start up at any time and without any warning!!**
+   This will measure thrust in grams from an rc motor and display the result
+   in serial monitor or on a 20 x 4 2004 LCD display.
+   It uses a PWM signal 1100µS to 2000µS sent to an ESC, this can be varied
+   by a potentiometer or presets can sent.
+
+   Created by
+   Pablo 18011 19th January 2023
+*/
+// Reference
+// Library HX711 by Bogdan Necula: https://github.com/bogde/HX711
+
+#include <LiquidCrystal_I2C.h>  // lcd control via serial i2c
+#include <Wire.h>               // access communication with I2C/TWI devices
+#include <Servo.h>              // enable motor control via pwm signal to a esc
+#include "HX711.h"              // load cell
+#include <ezButton.h>           // push button and debounce
+
+LiquidCrystal_I2C lcd(0x27, 20, 4);  // Set the LCD address to 0x27 for a 16 chars and 2 line display
+
+#define potentiometerPin A0  // analog input pin for the potentiometer.
+#define escPin 9             // this is signal pin to esc.Pin 9 (3, 9, 10 and 11 generates PWM frequency of 490Hz)(5 & 6 generates PWM frequency of 980Hz)
+ezButton button1(6);         // tare button
+ezButton button2(7);         // pause display
+ezButton button3(8);         // preset pwm
+
+const int LOADCELL_DOUT_PIN = 2;  // HX711 circuit wiring
+const int LOADCELL_SCK_PIN = 3;
+const int ledPin = 4;  // led, buzzer
+int ledState = LOW;    // ledState used to set the LED
+
+const unsigned long interval = 2000UL;  // set your delay time here
+unsigned long updateTime;               // store updateTime ( to 4billion and some change!)
+unsigned long currentTime;              // store currentTime ( to 4billion and some change!)
+boolean enableDelay = false;            // delay state
+int count = 0;                          // interger named count start value = zero
+
+const unsigned long eventInterval_2 = 500;
+const unsigned long eventInterval_3 = 2000;
+unsigned long updateTime_2 = 0;
+unsigned long updateTime_3 = 0;
+
+HX711 scale;
+int reading;
+int lastReading;
+#define CALIBRATION_FACTOR -476.592  // REPLACE WITH YOUR CALIBRATION FACTOR!
+
+Servo esc;
+const int preset2 = 1250, preset3 = 1500, preset4 = 1750, preset5 = 2000;  // pwm preset values
+int pwmVal;                                                                // pwmVal store
+int thrust;                                                                // thrustVal store
+
+//DC voltage Code, number of analog samples to take per reading Voltage reading
+#define NUM_SAMPLES 20
+
+int sum = 0;                     // sum of samples taken
+unsigned char sample_count = 0;  // current sample number
+float voltage = 0;               // calculated voltage
+
+
+//DC Current Code
+const float VCC = 4.78;                              // supply voltage 5V or 3.3V. If using PCB, set to 5V only my supply is 4.77V...
+float sensitivity = 40.0;                            //ACS758LCB-050B
+float quiescent_Output_voltage = 0.50;               // for ACS758LCB-050B
+const float FACTOR = sensitivity / 1000;             // set sensitivity for selected model
+const float QOV_2 = quiescent_Output_voltage * VCC;  // set quiescent Output voltage for selected model
+
+#define NUM_SAMPLES_2 20
+
+int sum_2 = 0;                     // sum of samples taken
+unsigned char sample_count_2 = 0;  // current sample number
+float voltage_2 = 0;               // calculated voltage
+float voltage_raw_2 = 0;
+float current = 0;
+
+void setup() {
+  analogReference(EXTERNAL);     // LM4040 supply 4.096V as a precise reference
+  pinMode(LED_BUILTIN, OUTPUT);  // heart-beat (fault finding)
+  pinMode(ledPin, OUTPUT);       // Op for led and buzzer.
+  lcd.begin();                   // start lcd
+  lcd.setCursor(0, 0);           // cursor start position
+  esc.attach(escPin);
+  esc.writeMicroseconds(1100);  // stops brief motor spin on nano start up
+  digitalWrite(ledPin, HIGH);   // Initial start up flash and beeps(armed)
+  delay(50);
+  digitalWrite(ledPin, LOW);
+  delay(50);
+  digitalWrite(ledPin, HIGH);
+  delay(50);
+  digitalWrite(ledPin, LOW);
+  delay(50);
+  digitalWrite(ledPin, HIGH);
+  delay(50);
+  digitalWrite(ledPin, LOW);
+
+  button1.setDebounceTime(10);  // set debounce time eg 50 milliseconds
+  button2.setDebounceTime(10);  // change to suit push button issue's
+  button3.setDebounceTime(10);
+
+  esc.writeMicroseconds(1100);  // send "stop" signal to ESC. Also necessary to arm the esc
+  Serial.begin(57600);
+  Serial.println(F("Initializing Sensors..."));
+
+  lcd.setCursor(4, 0);           // cursor start position
+  lcd.print(F("Initializing"));  // start message lcd and serial
+  lcd.setCursor(5, 2);
+  lcd.print(F("Sensors..."));
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);  // start load cell output pins
+  scale.set_scale(398.265);                          // this value is obtained by calibrating the scale with a known weight, example my HX711 scale = 398.265
+  scale.tare();                                      // reset the scale to 0
+  delay(5000);                                       // delay to allow the ESC to recognize the stopped signal.
+  lcd.clear();
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, !(millis() & 0x1E0));  // heart-beat                         //possible fix for PWM not at zero?   "if( PWM == 0){ digitalWrite( PIN , LOW ); }"
+  currentTime = millis();                          // currentTime = Millis( on time)
+  unsigned long currentTime_2 = millis();
+  unsigned long currentTime_3 = millis();
+  button1.loop();  // MUST call the loop() function first
+  button2.loop();  // MUST call the loop() function first
+  button3.loop();  // MUST call the loop() function first
+
+  int btn1State = button1.getState();  // btnState, call btnState
+  int btn2State = button2.getState();
+  int btn3State = button3.getState();
+  int potVal = analogRead(potentiometerPin);      // read input from potentiometer.
+  int pwmVal = map(potVal, 0, 1023, 1100, 2000);  // maps potentiometer values to PWM value.
+                                                  //*********************************** voltage code ******************************************************
+  while (sample_count < NUM_SAMPLES) {
+    sum += analogRead(A2);
+    sample_count++;
+  }
+  voltage = ((float)sum / (float)NUM_SAMPLES * 4.096) / 1024.0;                                            // 4.096 is the external ref voltage not vcc
+  if ((count == 0 || count == 1 || count == 2 || count == 3 || count == 4 || count == 5 || count == 7)) {  // this would not work as 0,1,2...?
+    Serial.print(voltage * 10.89, 1);                                                                      //11.0 for 1M and 100K 10.89 is adjusted value
+    Serial.print(F("V "));
+    lcd.setCursor(15, 0);
+    lcd.print(voltage * 10.89, 1);
+    lcd.print(F(" "));
+    lcd.setCursor(19, 0);
+    lcd.print(F("V"));
+    sample_count = 0;
+    sum = 0;
+  } else {
+    lcd.setCursor(15, 0);
+    lcd.print(F("     "));
+  }
+  //******************************** current code ***********************************************************
+  while (sample_count_2 < NUM_SAMPLES_2) {
+    sum_2 += analogRead(A1);
+    sample_count_2++;
+  }
+  voltage_raw_2 = ((float)sum_2 / (float)NUM_SAMPLES_2 * 4.096) / 1024.0;  // Read the voltage from sensor
+  voltage_2 = voltage_raw_2 - QOV_2 + 0.001;                               // 0.007 is a value to make voltage zero when there is no current
+  current = voltage_2 / FACTOR;
+  if ((count == 0 || count == 1 || count == 2 || count == 3 || count == 4 || count == 5 || count == 7) && (current >= 0.20)) {
+    Serial.print(F("    I: "));
+    Serial.print(current, 1);
+    Serial.println(F("A"));
+    lcd.setCursor(15, 2);
+    lcd.print(current, 1);  // print current to 1 decimal place
+    lcd.setCursor(19, 2);
+    lcd.print(F("A"));
+    sample_count_2 = 0;
+    sum_2 = 0;
+  }
+  if ((count == 0 || count == 1 || count == 2 || count == 3 || count == 4 || count == 5 || count == 7) && (current < 0.20)) {
+    Serial.print(F("I: "));
+    Serial.print(current, 1);
+    lcd.setCursor(15, 2);
+    lcd.print(F("0.0"));
+    lcd.setCursor(19, 2);
+    lcd.print(F("A"));
+    sample_count_2 = 0;
+    sum_2 = 0;
+  }
+  if ((btn3State == LOW) && (btn2State == HIGH) && (count == 0)) {  // pushbutton3 not pushed = normal operation, without (count == 0) pwm will jitter to low or pot val each loop!
+    esc.writeMicroseconds(pwmVal);                                  // send pwm signal to esc
+  } else {
+    esc.writeMicroseconds(1100);  // no pwm? then send 1100us
+  }
+  if ((count == 0 || count == 7) && (btn3State == LOW) && (pwmVal <= 1105)) {  // display "warning clear prop" either when pot is at 1100us or pwm preset is selected
+    lcd.setCursor(0, 3);
+    lcd.print(F("               "));  // write blank spaces as not using lcd.clear to prevent flicker
+  }
+  if ((count == 0 || count == 7) && (btn3State == LOW) && (pwmVal <= 1105) && (currentTime_2 - updateTime_2 >= eventInterval_2)) {
+    lcd.setCursor(0, 1);
+    lcd.print(F("WARNING CLEAR PROP!!"));
+  }
+  if ((count == 0 || count == 6) && (btn3State == LOW) && (pwmVal <= 1105) && (currentTime_3 - updateTime_3 >= eventInterval_3)) {
+    lcd.setCursor(0, 1);
+    lcd.print(F("                    "));
+    updateTime_2 = currentTime_2;
+    updateTime_3 = currentTime_3;
+  }
+  if ((count == 0 || count == 7) && (btn2State == HIGH) && (pwmVal >= 1100)) {  // write blank spaces as not using lcd.clear to prevent flicker
+    lcd.setCursor(0, 3);
+    lcd.print(F("               "));
+  }
+  if ((count == 0 || count == 7) && (btn2State == LOW) && (pwmVal > 1105)) {  // add a few us to 1100 if you have pwm display jitter ie not settled at 1100...
+    lcd.setCursor(0, 1);                                                      // stops Zero Pot message flicking on/off
+    lcd.print(F("     ZERO POT!!     "));                                     // display zero pot, press s!!
+    lcd.setCursor(0, 3);
+    lcd.print(F("     PRESS S !!"));  // remember 2 step safety....
+  }
+  if ((btn3State == HIGH) && (btn2State == LOW) && (pwmVal >= 1100)) {  // message display when you don't press S at the same time...
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwm val
+    lcd.print(pwmVal);
+    lcd.print(F("uS"));
+    lcd.setCursor(0, 1);
+    lcd.print(F("     ZERO POT!!     "));  // remember 2 step safety....//WARNING CLEAR PROP!!
+    lcd.setCursor(0, 3);
+    lcd.print(F("     PRESS S !!"));
+  }
+  if ((button3.isPressed()) && (btn2State == HIGH) && (pwmVal <= 1105)) {  // trigger delay if button 2 (safety) is pressed at the same time as button 3
+    count = 1;                                                             // button is pressed count = 1
+    enableDelay = true;                                                    // delay is active
+    updateTime = currentTime;                                              // move the goal post and updaTime(start point)
+  }
+  if ((count == 1, 2, 3, 4, 5, 6, 7) && (btn2State == LOW)) {  // safe start, button 2 has to be pushed down all the time preset pwm runs
+    count = 0;                                                 // if you remove this, then it is only one button to start preset pwmm and no stop until preset is complete
+  }
+  if ((count == 1) && (enableDelay == true)) {  // only work if these 2 conditions are met, use enable start something
+    Serial.print(F("PWM "));                    // serial monitor output
+    Serial.print(pwmVal);                       // normal operation print pot pwmVal
+    Serial.print(F("µS"));
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwm val
+    lcd.print(pwmVal);
+    lcd.print(F("uS"));
+    //lcd.setCursor(0, 1);
+    // lcd.print(F("WARNING CLEAR PROP!!"));  // display "WARNING CLEAR PROP!"
+    lcd.setCursor(0, 3);
+    lcd.print(F("     PWM PRESET     "));
+  }
+  if ((count == 1) && (enableDelay == true) && (currentTime_2 - updateTime_2 >= eventInterval_2)) {
+    lcd.setCursor(0, 1);
+    lcd.print(F("WARNING CLEAR PROP!!"));
+  }
+  if ((count == 1) && (enableDelay == true) && (currentTime_3 - updateTime_3 >= eventInterval_3)) {
+    lcd.setCursor(0, 1);
+    lcd.print(F("                    "));
+    updateTime_2 = currentTime_2;
+    updateTime_3 = currentTime_3;
+  }
+  if ((count == 1) && (enableDelay == false)) {  // check count = 1 enable is back to false,
+    count = 2;                                   // now make count value = 2
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if (btn2State == LOW) {       // this prevents led/buzzer staying on error when button2 is released
+    digitalWrite(ledPin, LOW);  // when preset led/buzzer warning is running....
+  }
+  if ((count == 1) && (enableDelay == true) && (ledState == LOW)) {  // led flash and buzzer warning before pwm preset starts
+    ledState = HIGH;                                                 // if the LED is off turn it on and vice-versa
+  } else {
+    ledState = LOW;
+  }
+  if ((count == 1) && (enableDelay == true) && (btn2State == HIGH)) {
+    digitalWrite(ledPin, ledState);  // set the LED with the ledState of the variable
+  }
+  if ((count == 2) && (enableDelay == true)) {  // only work if these 2 conditions are met, use enable start something
+    digitalWrite(ledPin, LOW);                  // this prevents led/buzzer staying on error after PWM PRESET start warning....
+    esc.writeMicroseconds(preset2);             // send preset pwm signal to esc
+    Serial.print(F("PWM "));
+    Serial.print(preset2);  // print sent preset pwm
+    Serial.print(F("µS"));
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(preset2);
+    lcd.print(F("uS"));
+    lcd.setCursor(0, 1);
+    lcd.print(F("                    "));  // this removes "WARNING CLEAR PROP!!" from PWM PRESET 2 to 5 on LCD
+  }
+  if ((count == 2) && (enableDelay == false)) {  // check count = 2 enable is back to false,
+    count = 3;                                   // now make count value = 3
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if ((count == 3) && (enableDelay == true)) {  // only work if these 2 conditions are met, use enable start something
+    esc.writeMicroseconds(preset3);             // send preset pwm signal to esc
+    Serial.print(F("PWM "));
+    Serial.print(preset3);  // print sent preset pwm
+    Serial.print(F("µS"));
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(preset3);
+    lcd.print(F("uS"));
+  }
+  if ((count == 3) && (enableDelay == false)) {  // check count = 3 enable is back to false,
+    count = 4;                                   // now make count value = 4
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if ((count == 4) && (enableDelay == true)) {  // only work if these 2 conditions are met, use enable start something
+    esc.writeMicroseconds(preset4);             // send preset pwm signal to esc
+    Serial.print(F("PWM "));
+    Serial.print(preset4);  // print sent preset pwm
+    Serial.print(F("µS"));
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(preset4);
+    lcd.print(F("uS"));
+  }
+  if ((count == 4) && (enableDelay == false)) {  // check count = 3 enable is back to false,
+    count = 5;                                   // now make count value = 4
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if ((count == 5) && (enableDelay == true)) {  // only work if these 2 conditions are met, use enable start something
+    esc.writeMicroseconds(preset5);             // send preset pwm signal to esc
+    Serial.print(F("PWM "));
+    Serial.print(preset5);  // print sent preset pwm
+    Serial.print(F("µS"));
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(preset5);
+    lcd.print(F("uS"));
+  }
+  if ((count == 5) && (enableDelay == false)) {  // check count = 3 enable is back to false,
+    esc.writeMicroseconds(pwmVal);               // send pwm signal to esc
+    lcd.clear();
+    count = 6;                                   // now make count value = 4
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if ((count == 6) && (enableDelay == true)) {  // use enable state to do something
+    lcd.setCursor(0, 0);
+    lcd.print(F("                    "));
+    lcd.setCursor(0, 1);
+    lcd.print(F("  PWM PRESET RESET  "));
+    lcd.setCursor(0, 2);
+    lcd.print(F("                    "));
+    lcd.setCursor(0, 3);
+    lcd.print(F("                    "));
+  }
+  if ((count == 6) && (enableDelay == false)) {  // check count = 3 enable is back to false,
+    count = 7;                                   // now make count value = 4
+    enableDelay = true;                          // start next interval
+    updateTime = currentTime;                    // move the goal posts
+  }
+  if (currentTime - updateTime >= interval) {  //check to see if intervalTime is reached
+    enableDelay = false;                       // if reached stop delay
+  }
+  if ((count == 7) && (enableDelay == false)) {  // check count = 4 enable is back to false,
+    lcd.clear();
+    count = 0;  // now make count value = o, resets push button pwm send
+  }
+  if (button1.isPressed()) {     // push button to zreo scale.
+    Serial.print(F("Tare..."));  // serial tare message
+    Serial.println("");
+    lcd.setCursor(4, 2);     // lcd tare message
+    lcd.print(F("Tare  "));  // zero scale.
+    scale.tare();            // this will allow a small delay for tare to be displayed and read on lcd (instead of flashing on/off)
+    lcd.setCursor(4, 2);     // this required so "Tare" clears
+    lcd.print(F("      "));  // when finished (we are not using "lcd.clear();" so no flicker...)
+  }
+  if (scale.wait_ready_timeout(200)) {                                // prepare load cell time out
+    reading = round(scale.get_units());                               // read output values
+    if ((btn3State == LOW) && (btn2State == HIGH) && (count == 0)) {  // normal operation, btn3 not pressed and tied to gnd 10kr
+      Serial.print(F("PWM "));                                        // serial monitor output
+      Serial.print(pwmVal);                                           // normal operation print pot pwm val
+      Serial.print(F("µS"));
+    }
+    Serial.print("\t");
+    Serial.print(F(" THR "));  // normal opreation, print thrust always
+    Serial.print(reading);
+    Serial.print(F("g"));
+    Serial.print("\t");
+    Serial.println();
+  }
+  if ((btn3State == LOW) && (btn2State == HIGH) && (count == 0 || count == 7)) {  // normal operation, btn3 not pressed and tied to gnd 10kr
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(pwmVal);
+    lcd.print(F("uS"));
+  }
+  if ((btn3State == LOW) && (btn2State == LOW) && (count == 0 || count == 7)) {  // if button 2 is not pressed display 1100us
+    lcd.setCursor(0, 0);
+    lcd.print(F("PWM "));  // normal operation display pot pwmVal
+    lcd.print(pwmVal);
+    lcd.print(F("uS"));
+  }
+  if ((count <= 5) || (count == 7)) {  // this is to stop thrust displayed when preset reset is displayed
+    lcd.setCursor(0, 2);
+    lcd.print(F("THR "));  // normal opreation, display thrust always (except "preset reset" message display)
+    lcd.print(reading);
+    lcd.print(F("g    "));  // spaces after "g" so numbers are cleared and displayed correctly
+  }
+}
