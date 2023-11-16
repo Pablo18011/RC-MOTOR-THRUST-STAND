@@ -79,5 +79,5 @@ With additional code, this allows the display of voltage and current in the rang
 # It's arrived!
 
 # RC MOTOR THRUST STAND v 2.0
- ![](/Images/RC_MOTOR_THRUST_STAND_V2__25047x10651.png)
+ ![](/Images/RC_MOTOR_THRUST_STAND_V2__15000x6379.png)
 
