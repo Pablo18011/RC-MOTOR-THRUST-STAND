@@ -28,6 +28,8 @@ to the other side of the load cell.I then clamp this into a heavy vice.
 
 
  ![](Images/RC_MOTOR_THRUST_STAND_PHOTO_2405x2250.png)
+
+ RC_MOTOR_THRUST_STAND_V2__25047x10651.png
  
  # Operation
  I started with a [digital scale tutorial](https://randomnerdtutorials.com/arduino-load-cell-hx711/), which uses a 5KG load cell and HK711 amplifier.
@@ -73,4 +75,9 @@ Coming soon...
 This uses a resistor voltage divider circuit, ACS758LCB-050B-PFF-T 50A Hall Current Sensor and a
 precision LM4040 4.096V Voltage Reference Breakout.
 With additional code, this allows the display of voltage and current in the range of 30V DC - 50 Amp.
+
+# It's arrived!
+
+# RC MOTOR THRUST STAND v 2.0
+ ![](/Images/RC_MOTOR_THRUST_STAND_V2__25047x10651.png)
 
