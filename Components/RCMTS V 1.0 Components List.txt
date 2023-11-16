@@ -1,17 +1,21 @@
-RCMTS V 1.0
+RCMTS V 1.0 & V 2.0
 
-2 x 400 Pin Breadboard Solderless Prototyping Bread Boards
+4 x 400 Pin Breadboard Solderless Prototyping Bread Boards
 1 x Arduino Nano Compatible ATMEGA328P USB-C & Micro USB 
 1 x 5KGLoad Cell + HX711 Amplifier 
+1 x Module Current Sensor ICACS758LCB-050B
+1 x Precision LM4040 Voltage Reference Breakout
 1 x IIC/I2C/TWI 2004 20X4 Character LCD Module Display For Arduino Blue Serial 
 1 x TURNIGY Plush 30amp Speed Controller w/BEC 
-1 x 10K Linear 9mm Potentiometer Knurled 6mm Metal Shaft 
+1 x 10KΩ Linear 9mm Potentiometer Knurled 6mm Metal Shaft 
 1 x Set of Dupont Jumper Wire Set M-F M-M F-F 
 3 x Momentary Tactile Push Button Switches 
-3 x 10 kΩ ±5% Resistors (pulldown)
+1 x 100kΩ R1 & 1MΩ R2 High Precision Resistor Voltage Divider Circuit(also calibrate)
+3 x 10kΩ ±5% Resistors (pulldown) R4, R5, R6
 1 x LED White high brightness
-1 x 330Ω resistor
+1 x 330Ω resistor R3
 1 x Male/Female Pin Headers
+2 x XT60 Male/Female Connectors
 1 x Aluminium bar
 1 x Quadcopter carbon arm
 4 x Pairs of bolts, nuts, washers...
